@@ -6,7 +6,6 @@ import sys
 import time
 import threading
 from multiprocessing import freeze_support
-from lastversion import lastversion
 
 import utils
 from MainRunner import MainThreadRunner
@@ -47,7 +46,7 @@ if __name__ == "__main__":
             with open(all_config_filename, "r", encoding="UTF-8") as f:
                 all_config = json.load(f)
         else:
-            with open("config.json", "r", encoding="UTF-8") as f:
+            with open("config/config.json", "r", encoding="UTF-8") as f:
                 all_config = json.load(f)
     except Exception as e:
         print("解析配置文件时出现错误，请检查配置文件！")
@@ -90,7 +89,7 @@ if __name__ == "__main__":
                 with open(all_config_filename, "r", encoding="UTF-8") as f:
                     all_config = json.load(f)
             else:
-                with open("config.json", "r", encoding="UTF-8") as f:
+                with open("config/config.json", "r", encoding="UTF-8") as f:
                     all_config = json.load(f)
         except Exception as e:
             print("解析配置文件时出现错误，请检查配置文件！已使用最后一次正确的配置")

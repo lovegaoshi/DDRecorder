@@ -69,3 +69,8 @@ class BiliLive(BaseLive):
             data['available_hosts'] = response['data']['host_server_list']
             data['token'] = response['data']['token']
         return data
+
+        
+if __name__ == '__main__':
+    app = BiliLive({'spec':{'room_id':5424}})
+    print(app.get_room_info())

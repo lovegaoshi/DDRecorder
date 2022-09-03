@@ -15,7 +15,7 @@
   },
   "spec": [
     {
-      "room_id": "566227",
+      "room_id": "5424",
       "recorder": { "keep_raw_record": false },
       "parser": {
         "interval": 30,
@@ -49,7 +49,7 @@
         },
         "copyright": 2,
         "record": {
-          "upload_record": true,
+          "upload_record": false,
           "keep_record_after_upload": true,
           "split_interval": 3600,
           "title": "【阳向心美】{date}直播录播",
@@ -76,73 +76,7 @@
         }
       },
       "backup": false
-    },
-    {
-      "room_id": "22637920",
-      "recorder": { "keep_raw_record": false },
-      "parser": {
-        "interval": 60,
-        "up_ratio": 4.5,
-        "down_ratio": 0.6,
-        "topK": 5
-      },
-      "clipper": {
-        "enable_clipper": true,
-        "min_length": 60,
-        "start_offset": -20,
-        "end_offset": 10
-      },
-      "manual_clipper": {
-        "enabled": false,
-        "uid": ""
-      },
-      "uploader": {
-        "account": {
-          "username": "account@example.com",
-          "password": "password",
-          "cookies": {
-            "SESSDATA": "your SESSDATA",
-            "bili_jct": "your bili_jct",
-            "DedeUserID": "your DedeUserID",
-            "DedeUserID__ckMd5": "your DedeUserID__ckMd5",
-            "sid": "your sid"
-          }
-        },
-        "copyright": 2,
-        "record": {
-          "upload_record": false,
-          "keep_record_after_upload": true,
-          "split_interval": 3600,
-          "title": "【桃井最中 Monaka】{date}直播录播",
-          "tid": 27,
-          "tags": [
-            "直播录播",
-            "桃井最中Monaka",
-            "虚拟主播",
-            "VTuber",
-            "虚拟UP主"
-          ],
-          "desc": "切片自{date} 桃井最中 Monaka 直播\n---------------------------------------\n本视频由全自动切片型智能 DD 机上传~",
-          "cover": ""
-        },
-        "clips": {
-          "upload_clips": true,
-          "keep_clips_after_upload": true,
-          "title": "【桃井最中 Monaka】{date}直播精彩剪辑【自动切片】",
-          "tid": 27,
-          "tags": [
-            "直播录播",
-            "剪辑",
-            "桃井最中Monaka",
-            "虚拟主播",
-            "VTuber",
-            "虚拟UP主"
-          ],
-          "desc": "切片自{date} 桃井最中 Monaka 直播\n---------------------------------------\n本视频由全自动切片型智能 DD 机剪辑上传~",
-          "cover": ""
-        }
-      },
-      "backup": false
     }
+    
   ]
 }

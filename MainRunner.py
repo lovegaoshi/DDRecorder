@@ -9,9 +9,7 @@ import utils
 from BiliLive import BiliLive
 from BiliLiveRecorder import BiliLiveRecorder
 from BiliVideoChecker import BiliVideoChecker
-from DanmuRecorder import BiliDanmuRecorder
 from Processor import Processor
-from Uploader import Uploader
 
 
 class MainRunner():
@@ -79,12 +77,8 @@ class MainRunner():
                 if not self.prev_live_status and self.bl.live_status:
                     start = datetime.datetime.now()
                     self.blr = BiliLiveRecorder(self.config, start)
-                    self.bdr = BiliDanmuRecorder(self.config, start)
                     record_process = Process(
                         target=self.blr.run)
-                    danmu_process = Process(
-                        target=self.bdr.run)
-                    danmu_process.start()
                     record_process.start()
 
                     self.current_state.value = int(utils.state.LIVE_STARTED)
@@ -92,7 +86,6 @@ class MainRunner():
                     self.prev_live_status = True
 
                     record_process.join()
-                    danmu_process.join()
 
                     self.current_state.value = int(
                         utils.state.PROCESSING_RECORDS)
