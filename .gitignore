@@ -131,3 +131,4 @@ config/*
 
 # vscode
 .vscode/
+*.flv

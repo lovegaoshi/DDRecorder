@@ -66,7 +66,7 @@ def init_danmu_log_dir(room_id: str, global_start: datetime.datetime, root_dir: 
 def generate_filename(room_id: str, room_status: dict = None) -> str:
     if room_status is not None:
         # {'room_name': '小唱一下寻找状态', 'site_name': 'BiliBili', 'site_domain': 'live.bilibili.com', 'status': True, 'hostname': '内德维德'}
-        return f"{room_status['hostmname']} {room_status['room_name']} {datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.flv"
+        return f"[{room_status['hostname']}] {room_status['room_name']} {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}.flv"
     return f"{room_id}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.flv"
 
 
