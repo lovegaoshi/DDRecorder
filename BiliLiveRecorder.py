@@ -18,6 +18,10 @@ class BiliLiveRecorder(BiliLive):
         BiliLive.__init__(self, config)
         self.record_dir = utils.init_record_dir(
             self.room_id, global_start, config.get('root', {}).get('data_path', "./"))
+        self.recording_dir = os.path.join(
+            os.getcwd(),
+            'recording'
+        )
         self.record_dir = os.path.join(
             os.getcwd(),
             'recorded'
@@ -59,9 +63,10 @@ class BiliLiveRecorder(BiliLive):
                     urls = self.get_live_urls()
 
                     filename = utils.generate_filename(self.room_id, room_status=self.get_room_info())
-                    c_filename = os.path.join(self.record_dir, filename)
+                    c_filename = os.path.join(self.recording_dir, filename)
                     self.record(urls[0], c_filename)
                     logging.info(self.generate_log('录制完成' + c_filename))
+                    os.replace(c_filename, os.path.join(self.record_dir, filename))
                 else:
                     logging.info(self.generate_log('下播了'))
                     break

@@ -90,11 +90,8 @@ class MainRunner():
                     self.current_state.value = int(
                         utils.state.PROCESSING_RECORDS)
                     self.state_change_time.value = time.time()
-
+                    
                     self.prev_live_status = False
-                    proc_process = Process(target=self.proc, args=(
-                        self.config, self.blr.record_dir, self.bdr.danmu_dir, self.current_state, self.state_change_time))
-                    proc_process.start()
                     try:
                         self.bl.check_live_status()
                     except Exception as e:

@@ -5,6 +5,7 @@ import traceback
 import requests
 import urllib3
 from requests.adapters import HTTPAdapter
+from utils import FILTERS
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -33,6 +34,7 @@ class BaseLive(metaclass=abc.ABCMeta):
         self.__live_status = False
         self.__allowed_check_interval = datetime.timedelta(
             seconds=config.get('root', {}).get('check_interval', 60))
+        self.url_filter = FILTERS[config.get('recorder', {}).get('url_filter',None)]
 
     def common_request(self, method: str, url: str, params: dict = None, data: dict = None) -> requests.Response:
         try:
@@ -61,6 +63,9 @@ class BaseLive(metaclass=abc.ABCMeta):
         if self.room_info['status']:
             logging.info(self.generate_log(
                 "直播间标题："+self.room_info['room_name']))
+            if len(self.url_filter([self.room_info['room_name'], None])) == 0: 
+                logging.info('stream title is rejected by the filter rule ')
+                return False
             return True
         else:
             logging.info(self.generate_log("等待开播"))

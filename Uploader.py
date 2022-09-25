@@ -1,161 +1,217 @@
-import datetime
+import os, re, json
+from utils import load_config, save_config, cell_stdout, strip_medianame_out, put_medianame_backin, ytbdl
 import logging
-import os
-import traceback
-import json
-from biliup.plugins.bili_webup import BiliBili, Data
+import sqlite3
 
-import utils
-from BiliLive import BiliLive
+keystamps = json.load(
+    open(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'config/biliWrapper.json',), 
+        encoding='utf-8'))
+PROCESSED_CONFIG_DIR = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'inaseged.yaml',)
 
-
-class Uploader(BiliLive):
-    def __init__(self, output_dir: str, splits_dir: str, config: dict):
-        super().__init__(config)
-        self.output_dir = output_dir
-        self.splits_dir = splits_dir
-
-        self.uploader = BiliBili(Data())
-        self.lines = config.get("root", {}).get(
-            "uploader", {}).get("lines", "AUTO")
-        account = {'account':
-                   {
-                       'username': self.config.get('spec', {}).get('uploader', {}).get('account', {}).get('username', ""),
-                       'password': self.config.get('spec', {}).get('uploader', {}).get('account', {}).get('password', "")
-                   },
-                   'access_token': self.config.get('spec', {}).get('uploader', {}).get('account', {}).get('access_token', ''),
-                   'refresh_token': self.config.get('spec', {}).get('uploader', {}).get('account', {}).get('refresh_token', ''),
-                   'cookies': self.config.get('spec', {}).get('uploader', {}).get('account', {}).get('cookies', None)}
-
+def bilibili_upload(
+        globbed,
+        media_basename,
+        source=None,
+        description=None,
+        episode_limit=180,
+        route='kodo'):
+    # because my ytbdl template is always "[uploader] title.mp4" I can extract 
+    # out uploader like this and use as a tag:
+    ripped_from = re.findall(r'\[.+\]', media_basename)[0][1:-1]
+    if source is None:
         try:
-            self.uploader.login(utils.get_cred_filename(
-                self.room_id, self.config.get('root', {}).get('data_path', "./")), account)
-        except Exception as e:
-            logging.error(self.generate_log(
-                'Error while login:' + str(e)+traceback.format_exc()))
-            raise(e)
-
-    def upload(self, global_start: datetime.datetime) -> dict:
-        logging.basicConfig(level=utils.get_log_level(self.config),
-                            format='%(asctime)s %(thread)d %(threadName)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                            datefmt='%a, %d %b %Y %H:%M:%S',
-                            filename=os.path.join(self.config.get('root', {}).get('logger', {}).get('log_path', "./log"), "Uploader_"+datetime.datetime.now(
-                            ).strftime('%Y-%m-%d_%H-%M-%S')+'.log'),
-                            filemode='a')
-        return_dict = {}
-        datestr = global_start.strftime(
-            '%Y{y}%m{m}%d{d}').format(y='年', m='月', d='日')
-        format_dict = {"date": datestr,
-                       "year": global_start.year,
-                       "month": global_start.month,
-                       "day": global_start.day,
-                       "hour": global_start.hour,
-                       "minute": global_start.minute,
-                       "second": global_start.second,
-                       "rough_time": utils.get_rough_time(global_start.hour),
-                       "room_name": self.room_info['room_name']}
+            source = keystamps[ripped_from][0]
+        except KeyError:
+            raise KeyError('cant determine source url for this repost', ripped_from)
+    if description is None:
         try:
-            if self.config.get('spec', {}).get('uploader', {}).get('clips', {}).get('upload_clips', False):
-                clips_video_data = Data()
-                clips_video_data.copyright = self.config.get('spec', {}).get(
-                    'uploader', {}).get('copyright', 2)
-                clips_video_data.title = self.config.get('spec', {}).get(
-                    'uploader', {}).get('clips', {}).get('title', "").format(**format_dict)
-                clips_video_data.desc = self.config.get('spec', {}).get(
-                    'uploader', {}).get('clips', {}).get('desc', "").format(**format_dict)
-                clips_video_data.source = "https://live.bilibili.com/"+self.room_id
-                clips_video_data.tid = self.config.get('spec', {}).get(
-                    'uploader', {}).get('clips', {}).get('tid', 27)
-                clips_video_data.set_tag(self.config.get('spec', {}).get(
-                    'uploader', {}).get('clips', {}).get('tags', []))
+            description = keystamps[ripped_from][1]
+        except IndexError:
+            description = '关注{}：{}'.format(
+                ripped_from,
+                source,)
+    try:
+        tags = keystamps[ripped_from][2]
+    except IndexError:
+        tags = [ripped_from]
+    title = media_basename[:media_basename.rfind('.')][:60]
+    # title rework: [歌切][海德薇Hedvika] 20220608
+    title = '[{}] {}'.format(tags[0], os.path.splitext(media_basename)[0][-8:])
+    title = media_basename[:media_basename.rfind('.')][:60]
+    globbed = sorted(globbed)
+    globbed_episode_limit = []
+    for i in range(len(globbed) // episode_limit + 1):
+        if globbed[i] == media_basename:
+            continue
+        globbed_episode_limit.append(
+            globbed[i * episode_limit: (i + 1) * episode_limit])
 
-                self.uploader.video = clips_video_data
-                filelists = os.listdir(self.output_dir)
-                filelists.sort(key=lambda x: int(
-                    os.path.splitext(x)[0].split("_")[-2]))
-                for filename in filelists:
-                    if os.path.getsize(os.path.join(self.output_dir, filename)) < 1024*1024:
-                        continue
-                    file_path = os.path.join(self.output_dir, filename)
-                    video_part = self.uploader.upload_file(
-                        file_path, lines=self.lines)
-                    video_part['title'] = os.path.splitext(filename)[
-                        0].split("_")[-1]
-                    video_part['desc'] = self.config.get('spec', {}).get('uploader', {}).get(
-                        'clips', {}).get('desc', "").format(**format_dict)
-                    clips_video_data.append(video_part)
-                if os.path.exists(self.config.get('spec', {}).get(
-                        'uploader', {}).get('clips', {}).get('cover', "")):
-                    clips_video_data.cover = self.uploader.cover_up(self.config.get('spec', {}).get(
-                        'uploader', {}).get('clips', {}).get('cover', ""))
-                clips_video_ret = self.uploader.submit()
-                if clips_video_ret['code'] == 0 and clips_video_ret['data'] is not None:
-                    return_dict["clips"] = {
-                        "avid": clips_video_ret['data']['aid'],
-                        "bvid": clips_video_ret['data']['bvid']
-                    }
+    for i in range(len(globbed_episode_limit)):
+        if i > 0:
+            episode_limit_prefix = '_' + chr(97 + i)
+        else:
+            episode_limit_prefix = ''
+        retry = 0
+        cmd = [
+                './biliup',
+                'upload',
+            ]
+        for x in globbed_episode_limit[i]: cmd.append(x)
+        cmd.append('--copyright=2')
+        cmd.append('--desc={}'.format(description))
+        cmd.append('--tid=31')
+        cmd.append('--tag={}'.format(','.join(tags)))
+        cmd.append('--title=[歌切]{}'.format(title[:60] + episode_limit_prefix))
+        cmd.append('--source={}'.format(source))
+        cmd.append('-l=' + route)
 
-            if self.config.get('spec', {}).get('uploader', {}).get('record', {}).get('upload_record', False):
-                record_video_data = Data()
-                record_video_data.copyright = self.config.get('spec', {}).get(
-                    'uploader', {}).get('copyright', 2)
-                record_video_data.title = self.config.get('spec', {}).get(
-                    'uploader', {}).get('record', {}).get('title', "").format(**format_dict)
-                record_video_data.desc = self.config.get('spec', {}).get(
-                    'uploader', {}).get('record', {}).get('desc', "").format(**format_dict)
-                record_video_data.source = "https://live.bilibili.com/"+self.room_id
-                record_video_data.tid = self.config.get('spec', {}).get(
-                    'uploader', {}).get('record', {}).get('tid', 27)
-                record_video_data.set_tag(self.config.get('spec', {}).get(
-                    'uploader', {}).get('record', {}).get('tags', []))
-
-                self.uploader.video = record_video_data
-
-                filelists = os.listdir(self.splits_dir)
-                filelists.sort(key=lambda x: int(
-                    os.path.splitext(x)[0].split("_")[-1]))
-                for filename in filelists:
-                    if os.path.getsize(os.path.join(self.splits_dir, filename)) < 1024*1024:
-                        continue
-                    file_path = os.path.join(self.splits_dir, filename)
-                    video_part = self.uploader.upload_file(
-                        file_path, lines=self.lines)
-                    video_part['title'] = os.path.splitext(filename)[
-                        0].split("_")[-1]
-                    video_part['desc'] = self.config.get('spec', {}).get('uploader', {}).get(
-                        'record', {}).get('desc', "").format(**format_dict)
-                    record_video_data.append(video_part)
-                if os.path.exists(self.config.get('spec', {}).get(
-                        'uploader', {}).get('record', {}).get('cover', "")):
-                    record_video_data.cover = self.uploader.cover_up(self.config.get('spec', {}).get(
-                        'uploader', {}).get('record', {}).get('cover', ""))
-                record_video_ret = self.uploader.submit()
-                if record_video_ret['code'] == 0 and record_video_ret['data'] is not None:
-                    return_dict["record"] = {
-                        "avid": record_video_ret['data']['aid'],
-                        "bvid": record_video_ret['data']['bvid']
-                    }
-
-        except Exception as e:
-            logging.error(self.generate_log(
-                'Error while uploading:' + str(e)+traceback.format_exc()))
-            return None
-        finally:
-            self.uploader.close()
-
-        return return_dict
+        while cell_stdout(cmd, encoding="utf-8") != 0:
+            rescue = []
+            for item in globbed_episode_limit[i]:
+                if os.path.isfile(item):
+                    rescue.append(item)
+            globbed_episode_limit[i] = rescue
+            retry += 1
+            print('upload failed, retry attempt', retry)
+            if retry > 5:
+                raise Exception(
+                    'biliup failed for a total of {} times'.format(
+                        str(retry)))
 
 
-if __name__ == '__main__':
-    all_config_filename = 'config/config.spec.json'
-    with open(all_config_filename, "r", encoding="UTF-8") as f:
-        all_config = json.load(f)
+def get_shazam(shazam_dict: dict, index: int):
+    try:
+        return '_' + shazam_dict[index]
+    except KeyError:
+        return ''
 
-    config = {
-        'root': all_config.get('root', {}),
-        'spec': all_config['spec'][0]
-    }
-    uploader = Uploader(
-        output_dir='data\\data\\outputs\\8792912_2022-04-16_06-58-40', splits_dir='', config=config)
-    uploader.upload(global_start=datetime.datetime.strptime(
-        '2022-04-16_06-58-40', '%Y-%m-%d_%H-%M-%S'))
+
+def ffmpeg(media: str, timestamps: list, shazam: list, executing = cell_stdout):
+    '''recording is the file path; timestamps is owrking as expected,
+    shazam is not; its onyl keeping the ones shazamed; we need to parse this a bit
+    ''' 
+    shazamed = {}
+    for i in shazam:
+        try:
+            shazamed_index, filename = re.findall(r'.+_(\d+)_+(.+)\..+', i)[0]
+            shazamed[int(shazamed_index)] = filename
+        except:
+            pass
+    for index, i in enumerate(timestamps):
+        executing(
+            [
+                'ffmpeg',
+                '-i',
+                media,
+                '-c:v','copy','-c:a', 'copy',
+                '-ss',
+                i[0],
+                '-to',
+                i[1],
+                os.path.join(
+                    os.getcwd(), 
+                    'recorded',
+                    os.path.splitext(os.path.basename(media))[0] + "_" +
+                    str(index).zfill(2) + 
+                    get_shazam(shazamed, index) +
+                    os.path.splitext(os.path.basename(media))[1]
+                )
+            ]
+        )
+
+
+class Biliup():
+    def __init__(
+        self,
+        outdir: str,
+        media: str,
+        route: str = 'kodo',
+        cleanup: bool = True,
+        ):
+        self.outdir = outdir
+        self.media = media
+        self.route = route
+        self.cleanup = cleanup
+        self.episode_limit = 180
+    
+    def run(self):
+        outdir = self.outdir
+        media = self.media
+        stripped_media_names = strip_medianame_out(outdir, media)
+        bilibili_upload(stripped_media_names, os.path.basename(media), source=None, episode_limit=self.episode_limit, route=self.route)
+        print('finished stripping and uploading', media)
+        # i always do not keep original stream
+        os.remove(media)
+        # for a router uploader, remove everything; i only have so much sapce!
+        if self.cleanup:
+            for i in stripped_media_names: os.remove(i)
+        else: put_medianame_backin(stripped_media_names, media, shazamed=outdir, nonshazamed=r'D:\tmp\ytd\extract')
+
+class Uploader():
+    def __init__(self):
+        pass
+
+    def run(self):
+        '''
+        frist read file; 
+        '''
+        content = load_config(PROCESSED_CONFIG_DIR)
+        content2 = {}
+        for i in content:
+            try:
+                if 'http' in i: 
+                    logging.info(('found routerup link of ', i, 'now downloading...'))
+                    media = ytbdl(
+                    i,
+                    soundonly='',
+                    outdir=os.path.join(os.getcwd(), 'recorded'), 
+                    aria=8,
+                )
+                else:
+                    media = os.path.join(os.getcwd(), 'recorded', i)
+                if not os.path.isfile(media): 
+                    logging.debug((i, ' does not exist on disk; skipped.'))
+                    continue
+                logging.info(('stripping and uploading', i))
+                ffmpeg(
+                    media,
+                    content[i]['timestamps'],
+                    content[i]['shazam'],
+                )
+                Biliup(
+                    outdir=os.path.join(os.getcwd(), 'recorded'),
+                    media=media,
+                    cleanup=True,
+                ).run()
+            except KeyError:
+                # stuck at shazam; save and come back later
+                logging.warning((i, ' is missing shazam or inaseg; coming back later.'))
+                content2[i] = content[i]
+                raise
+        save_config(PROCESSED_CONFIG_DIR, content2)
+
+if __name__ == "__main__":
+    import time
+    from datetime import datetime
+    logging.basicConfig(level=logging.DEBUG)
+    import argparse
+    import sys
+    parser = argparse.ArgumentParser(description='inaUploader')
+    parser.add_argument(
+        '--watch-interval',
+        dest='interval',
+        type=int,
+        default=900,
+        help='watch sleep interval in seconds')
+    args = parser.parse_args()
+    logging.info(('inaupload started'))
+    while True:
+        Uploader().run()
+        logging.info(('uploader finished watching at', datetime.now().ctime(), 'now waiting for 30 min.'))
+        if args.interval < 1: sys.exit(1)
+        time.sleep(args.interval)
