@@ -1,0 +1,4 @@
+celery
+sqlalchemy
+flask
+yt-dlp
