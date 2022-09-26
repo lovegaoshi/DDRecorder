@@ -128,6 +128,7 @@ data/
 log/
 config/*
 !config/config.json
+!config/biliWrapper.json
 
 # vscode
 .vscode/
