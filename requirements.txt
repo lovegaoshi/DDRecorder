@@ -4,3 +4,8 @@ requests>=2.27.1
 urllib3>=1.26.9
 websockets>=10.2
 ffmpeg-python>=0.2.0
+
+
+celery
+sqlalchemy
+flask

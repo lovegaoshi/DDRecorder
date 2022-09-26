@@ -13,6 +13,7 @@ class BiliLive(BaseLive):
         self.room_id = config['spec']['room_id']
         self.site_name = 'BiliBili'
         self.site_domain = 'live.bilibili.com'
+        self.url_filter = config['spec'].get('recorder', {}).get('url_filter',None)
         self.get_room_info()
         self.check_live_status()
 

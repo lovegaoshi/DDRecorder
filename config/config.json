@@ -3,7 +3,7 @@
     "check_interval": 60,
     "print_interval": 10,
     "data_path": "./",
-    "logger": { "log_path": "./log", "log_level": "DEBUG" },
+    "logger": { "log_path": "./log", "log_level": "INFO" },
     "request_header": {},
     "uploader": {
       "upload_by_edit": true,
@@ -15,8 +15,11 @@
   },
   "spec": [
     {
-      "room_id": "5424",
-      "recorder": { "keep_raw_record": false },
+      "room_id": "25077199",
+      "recorder": { 
+        "keep_raw_record": false,
+        "url_filter": "karaoke" 
+      },
       "parser": {
         "interval": 30,
         "up_ratio": 2.5,

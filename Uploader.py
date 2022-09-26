@@ -1,7 +1,6 @@
 import os, re, json
 from utils import load_config, save_config, cell_stdout, strip_medianame_out, put_medianame_backin, ytbdl
 import logging
-import sqlite3
 
 keystamps = json.load(
     open(
@@ -152,48 +151,70 @@ class Biliup():
             for i in stripped_media_names: os.remove(i)
         else: put_medianame_backin(stripped_media_names, media, shazamed=outdir, nonshazamed=r'D:\tmp\ytd\extract')
 
-class Uploader():
+class UploadWorker():
+    def __init__(self, media, timestamps, shazam):
+        self.media = media
+        self.timestamps = timestamps
+        self.shazam = shazam
+
+    def run(self):
+        media = self.media
+        timestamps = self.timestamps
+        shazam = self.shazam
+
+        if 'http' in media: 
+            logging.info(('found routerup link of ', media, 'now downloading...'))
+            media = ytbdl(
+            media,
+            soundonly='',
+            outdir=os.path.join(os.getcwd(), 'recorded'), 
+            aria=8,
+        )
+        else:
+            media = os.path.join(os.getcwd(), 'recorded', media)
+        if not os.path.isfile(media): 
+            logging.debug((media, ' does not exist on disk; skipped.'))
+            return
+        logging.info(('stripping and uploading', media))
+        ffmpeg(
+            media,
+            timestamps,
+            shazam,
+        )
+        Biliup(
+            outdir=os.path.join(os.getcwd(), 'recorded'),
+            media=media,
+            cleanup=True,
+        ).run()
+
+class ConfigUploader():
+    # should have used celery + flask but here we are...
+
     def __init__(self):
         pass
 
-    def run(self):
+    def run(self, ):
         '''
-        frist read file; 
+        data must contain 
         '''
         content = load_config(PROCESSED_CONFIG_DIR)
-        content2 = {}
+        content_failed = {}
+        content_process = {}
         for i in content:
-            try:
-                if 'http' in i: 
-                    logging.info(('found routerup link of ', i, 'now downloading...'))
-                    media = ytbdl(
-                    i,
-                    soundonly='',
-                    outdir=os.path.join(os.getcwd(), 'recorded'), 
-                    aria=8,
-                )
-                else:
-                    media = os.path.join(os.getcwd(), 'recorded', i)
-                if not os.path.isfile(media): 
-                    logging.debug((i, ' does not exist on disk; skipped.'))
-                    continue
-                logging.info(('stripping and uploading', i))
-                ffmpeg(
-                    media,
-                    content[i]['timestamps'],
-                    content[i]['shazam'],
-                )
-                Biliup(
-                    outdir=os.path.join(os.getcwd(), 'recorded'),
-                    media=media,
-                    cleanup=True,
-                ).run()
-            except KeyError:
-                # stuck at shazam; save and come back later
+            if 'timestamps' in content[i] and 'shazam' in content[i]:
+                content_process[i] = content[i]
+            else:
+               # stuck at shazam; save and come back later
                 logging.warning((i, ' is missing shazam or inaseg; coming back later.'))
-                content2[i] = content[i]
+                content_failed[i] = content[i]
                 raise
-        save_config(PROCESSED_CONFIG_DIR, content2)
+        save_config(PROCESSED_CONFIG_DIR, content_failed)
+        for i in content_process:
+            UploadWorker(
+                i,
+                content[i]['timestamps'],
+                content[i]['shazam'],).run()
+
 
 if __name__ == "__main__":
     import time
@@ -211,7 +232,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logging.info(('inaupload started'))
     while True:
-        Uploader().run()
+        ConfigUploader().run()
         logging.info(('uploader finished watching at', datetime.now().ctime(), 'now waiting for 30 min.'))
         if args.interval < 1: sys.exit(1)
         time.sleep(args.interval)
