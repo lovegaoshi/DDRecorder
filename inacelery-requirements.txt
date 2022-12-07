@@ -2,3 +2,5 @@ celery
 sqlalchemy
 flask
 yt-dlp
+prettytable
+gunicorn

@@ -9,6 +9,7 @@ import urllib3
 
 import utils
 from BiliLive import BiliLive
+import subprocess
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -66,9 +67,15 @@ class BiliLiveRecorder(BiliLive):
                     c_filename = os.path.join(self.recording_dir, filename)
                     self.record(urls[0], c_filename)
                     logging.info(self.generate_log('录制完成' + c_filename))
-                    os.replace(c_filename, os.path.join(self.record_dir, filename))
+                    if os.path.getsize(c_filename) < 200:
+                        logging.warning(self.generate_log('recorded size is too small; removing' + c_filename))
+                        os.remove(c_filename)
+                    else:                       
+                        os.replace(c_filename, os.path.join(self.record_dir, filename))
                 else:
                     logging.info(self.generate_log('下播了'))
+                    # recorded streams for whatever reason dont have duration metadata stored; to solve 
+                    # we do a ffmpeg copy.  copy -c:a copy
                     break
             except Exception as e:
                 logging.error(self.generate_log(

@@ -1,13 +1,10 @@
 import os, re, json
 from utils import load_config, save_config, cell_stdout, strip_medianame_out, put_medianame_backin, ytbdl
 import logging
-
-keystamps = json.load(
-    open(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'config/biliWrapper.json',), 
-        encoding='utf-8'))
+from threading import Thread
+from queue import Queue
+from multiprocessing import cpu_count
+# celery -A inacelery worker -c 1 --loglevel=INFO
 PROCESSED_CONFIG_DIR = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'inaseged.yaml',)
@@ -22,11 +19,20 @@ def bilibili_upload(
     # because my ytbdl template is always "[uploader] title.mp4" I can extract 
     # out uploader like this and use as a tag:
     ripped_from = re.findall(r'\[.+\]', media_basename)[0][1:-1]
+    keystamps = json.load(
+        open(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'config/biliWrapper.json',), 
+            encoding='utf-8'))
     if source is None:
         try:
             source = keystamps[ripped_from][0]
         except KeyError:
-            raise KeyError('cant determine source url for this repost', ripped_from)
+            # raise KeyError('cant determine source url for this repost', ripped_from)
+            ripped_from = 'undefined'
+            source = 'n/a'
+            description = 'n/a'
     if description is None:
         try:
             description = keystamps[ripped_from][1]
@@ -37,6 +43,8 @@ def bilibili_upload(
     try:
         tags = keystamps[ripped_from][2]
     except IndexError:
+        tags = [ripped_from]
+    except KeyError:
         tags = [ripped_from]
     title = media_basename[:media_basename.rfind('.')][:60]
     # title rework: [歌切][海德薇Hedvika] 20220608
@@ -89,6 +97,27 @@ def get_shazam(shazam_dict: dict, index: int):
     except KeyError:
         return ''
 
+class FFmpegWorker(Thread):
+    
+    def __init__(self, queue):
+        Thread.__init__(self)
+        self.queue = queue
+
+    def run(self):
+        while True:
+            # Get the work from the queue and expand the tuple
+            cmd = self.queue.get()
+            try:
+                cell_stdout(cmd)
+            finally:
+                self.queue.task_done()
+
+
+queue = Queue()
+for i in range(max([1, cpu_count()])):# cpu_count() - 1
+    worker = FFmpegWorker(queue)
+    worker.daemon = True
+    worker.start()
 
 def ffmpeg(media: str, timestamps: list, shazam: list, executing = cell_stdout):
     '''recording is the file path; timestamps is owrking as expected,
@@ -101,12 +130,14 @@ def ffmpeg(media: str, timestamps: list, shazam: list, executing = cell_stdout):
             shazamed[int(shazamed_index)] = filename
         except:
             pass
+    logging.debug(('start ffmpeg', timestamps, shazamed))
     for index, i in enumerate(timestamps):
-        executing(
-            [
+        logging.debug(('submitted', i, get_shazam(shazamed, index)))
+        cmd = [
                 'ffmpeg',
                 '-i',
                 media,
+                '-nostdin',
                 '-c:v','copy','-c:a', 'copy',
                 '-ss',
                 i[0],
@@ -121,7 +152,10 @@ def ffmpeg(media: str, timestamps: list, shazam: list, executing = cell_stdout):
                     os.path.splitext(os.path.basename(media))[1]
                 )
             ]
-        )
+        #queue.put(cmd)
+        #continue
+        executing(cmd)
+    queue.join()
 
 
 class Biliup():
@@ -143,7 +177,7 @@ class Biliup():
         media = self.media
         stripped_media_names = strip_medianame_out(outdir, media)
         bilibili_upload(stripped_media_names, os.path.basename(media), source=None, episode_limit=self.episode_limit, route=self.route)
-        print('finished stripping and uploading', media)
+        logging.info('finished stripping and uploading', media)
         # i always do not keep original stream
         os.remove(media)
         # for a router uploader, remove everything; i only have so much sapce!
@@ -161,7 +195,6 @@ class UploadWorker():
         media = self.media
         timestamps = self.timestamps
         shazam = self.shazam
-
         if 'http' in media: 
             logging.info(('found routerup link of ', media, 'now downloading...'))
             media = ytbdl(

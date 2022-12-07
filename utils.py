@@ -12,7 +12,7 @@ import subprocess
 import glob
 import shutil
 import re
-
+import shlex
 import prettytable as pt
 
 
@@ -321,7 +321,7 @@ def split_in_half(filename, length:str = None, run: bool = True):
         return
     import subprocess
     for i in cmds:
-        c = subprocess.Popen(cmds)
+        c = subprocess.Popen(shlex.split(i))
         c.wait()
     os.remove(filename)
 
@@ -338,7 +338,7 @@ def url_filter(r: list, or_keywords:list=[]) -> list:
 
 FILTERS = {
     None: lambda r: [x[1] for x in r],
-    'karaoke': lambda r: url_filter(r, or_keywords=['歌','唱','黑听']),
+    'karaoke': lambda r: url_filter(r, or_keywords=['歌','唱']),
     'moonlight': lambda r: url_filter(r, or_keywords=['歌','唱','黑听','猫猫头播放器']),
 }
 
@@ -397,3 +397,25 @@ def ytbdl(
         r.append([i, SM(isjunk=None, a=os.path.basename(
             fname), b=os.path.basename(i)).ratio()])
     return sorted(r, key=lambda x: x[1], reverse=True)[0][0]
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    import argparse
+    parser = argparse.ArgumentParser(description='inaUploader')
+    parser.add_argument(
+        '--file',
+        dest='file',
+        type=str,
+        help='watch sleep interval in seconds')
+    parser.add_argument(
+        '--timestamp',
+        dest='timestamp',
+        type=str,
+        help='watch sleep interval in seconds')
+    args = parser.parse_args()
+
+    split_in_half(os.path.join(
+        os.path.dirname(
+        os.path.abspath(__file__)),
+        'recorded',
+        args.file), args.timestamp)

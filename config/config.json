@@ -79,6 +79,138 @@
         }
       },
       "backup": false
+    },
+    {
+      "room_id": "23368278",
+      "recorder": { 
+        "keep_raw_record": false,
+        "url_filter": "karaoke" 
+      },
+      "parser": {
+        "interval": 30,
+        "up_ratio": 2.5,
+        "down_ratio": 0.75,
+        "topK": 5
+      },
+      "clipper": {
+        "enable_clipper": false,
+        "min_length": 30,
+        "start_offset": -20,
+        "end_offset": 10
+      },
+      "manual_clipper": {
+        "enabled": false,
+        "uid": ""
+      },
+      "uploader": {
+        "account": {
+          "username": "account@example.com",
+          "password": "password",
+          "access_token": "your access_token",
+          "refresh_token": "your refresh_token",
+          "cookies": {
+            "SESSDATA": "your SESSDATA",
+            "bili_jct": "your bili_jct",
+            "DedeUserID": "your DedeUserID",
+            "DedeUserID__ckMd5": "your DedeUserID__ckMd5",
+            "sid": "your sid"
+          }
+        },
+        "copyright": 2,
+        "record": {
+          "upload_record": false,
+          "keep_record_after_upload": true,
+          "split_interval": 3600,
+          "title": "【阳向心美】{date}直播录播",
+          "tid": 27,
+          "tags": ["直播录播", "阳向心美", "虚拟主播", "VTuber", "虚拟UP主"],
+          "desc": "切片自{date} 阳向心美 Official 直播\n---------------------------------------\n本视频由全自动切片型智能 DD 机上传~",
+          "cover": ""
+        },
+        "clips": {
+          "upload_clips": false,
+          "keep_clips_after_upload": true,
+          "title": "【阳向心美】{date}直播精彩剪辑【自动切片】",
+          "tid": 27,
+          "tags": [
+            "直播录播",
+            "剪辑",
+            "阳向心美",
+            "虚拟主播",
+            "VTuber",
+            "虚拟UP主"
+          ],
+          "desc": "切片自{date} 阳向心美 Official 直播\n---------------------------------------\n本视频由全自动切片型智能 DD 机剪辑上传~",
+          "cover": ""
+        }
+      },
+      "backup": false
+    },
+    {
+      "room_id": "24688068",
+      "recorder": { 
+        "keep_raw_record": false,
+        "url_filter": "karaoke" 
+      },
+      "parser": {
+        "interval": 30,
+        "up_ratio": 2.5,
+        "down_ratio": 0.75,
+        "topK": 5
+      },
+      "clipper": {
+        "enable_clipper": false,
+        "min_length": 30,
+        "start_offset": -20,
+        "end_offset": 10
+      },
+      "manual_clipper": {
+        "enabled": false,
+        "uid": ""
+      },
+      "uploader": {
+        "account": {
+          "username": "account@example.com",
+          "password": "password",
+          "access_token": "your access_token",
+          "refresh_token": "your refresh_token",
+          "cookies": {
+            "SESSDATA": "your SESSDATA",
+            "bili_jct": "your bili_jct",
+            "DedeUserID": "your DedeUserID",
+            "DedeUserID__ckMd5": "your DedeUserID__ckMd5",
+            "sid": "your sid"
+          }
+        },
+        "copyright": 2,
+        "record": {
+          "upload_record": false,
+          "keep_record_after_upload": true,
+          "split_interval": 3600,
+          "title": "【阳向心美】{date}直播录播",
+          "tid": 27,
+          "tags": ["直播录播", "阳向心美", "虚拟主播", "VTuber", "虚拟UP主"],
+          "desc": "切片自{date} 阳向心美 Official 直播\n---------------------------------------\n本视频由全自动切片型智能 DD 机上传~",
+          "cover": ""
+        },
+        "clips": {
+          "upload_clips": false,
+          "keep_clips_after_upload": true,
+          "title": "【阳向心美】{date}直播精彩剪辑【自动切片】",
+          "tid": 27,
+          "tags": [
+            "直播录播",
+            "剪辑",
+            "阳向心美",
+            "虚拟主播",
+            "VTuber",
+            "虚拟UP主"
+          ],
+          "desc": "切片自{date} 阳向心美 Official 直播\n---------------------------------------\n本视频由全自动切片型智能 DD 机剪辑上传~",
+          "cover": ""
+        }
+      },
+      "backup": false
     }
     
   ]
