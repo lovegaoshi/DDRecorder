@@ -338,7 +338,7 @@ def url_filter(r: list, or_keywords:list=[]) -> list:
 
 FILTERS = {
     None: lambda r: [x[1] for x in r],
-    'karaoke': lambda r: url_filter(r, or_keywords=['歌','唱']),
+    'karaoke': lambda r: url_filter(r, or_keywords=['歌','唱', "Live", "LIVE", "live"]),
     'moonlight': lambda r: url_filter(r, or_keywords=['歌','唱','黑听','猫猫头播放器']),
 }
 

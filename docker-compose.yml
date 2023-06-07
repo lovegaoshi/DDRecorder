@@ -6,4 +6,6 @@ services:
       - ./config:/usr/src/app/config
       - ./log:/usr/src/app/log
       - ./data:/usr/src/app/data
+      - ./recorded:/usr/src/app/recorded
+      - ./recording:/usr/src/app/recording
     restart: always

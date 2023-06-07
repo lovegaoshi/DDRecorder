@@ -30,13 +30,12 @@ class BiliLiveRecorder(BiliLive):
 
     def record(self, record_url: str, output_filename: str) -> None:
         try:
+            live_count = 0
             logging.info(self.generate_log('√ 正在录制...' + self.room_id))
             default_headers = {
                 'Accept-Encoding': 'identity',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36 ',
-                'Referer': re.findall(
-                    r'(https://.*\/).*\.flv',
-                    record_url)[0]
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+                'Referer': 'https://live.bilibili.com/'
             }
             headers = {**default_headers, **
                        self.config.get('root', {}).get('request_header', {})}
@@ -44,10 +43,15 @@ class BiliLiveRecorder(BiliLive):
                                 headers=headers,
                                 timeout=self.config.get(
                                     'root', {}).get('check_interval', 60))
-            with open(output_filename, "wb") as f:
+            with open(output_filename, "wb") as f: # 1KB
                 for chunk in resp.iter_content(chunk_size=1024):
                     if chunk:
                         f.write(chunk)
+                    if not self.live_status:
+                        live_count += 1
+                        # 100MB
+                    if live_count > 300000:
+                        raise Exception(f'{self.room_id} is not live anymore.')
         except Exception as e:
             logging.error(self.generate_log(
                 'Error while recording:' + str(e)))
