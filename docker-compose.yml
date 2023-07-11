@@ -2,10 +2,11 @@ version: "3"
 services:
   recorder:
     build: .
+    user: "1001:1001"
     volumes:
       - ./config:/usr/src/app/config
       - ./log:/usr/src/app/log
       - ./data:/usr/src/app/data
       - ./recorded:/usr/src/app/recorded
       - ./recording:/usr/src/app/recording
-    restart: always
+    restart: unless-stopped

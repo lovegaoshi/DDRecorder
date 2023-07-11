@@ -31,7 +31,16 @@
       },
       "note": "niya",
       "backup": false
-    },    
+    },
+    {
+      "room_id": "26924998",
+      "recorder": { 
+        "keep_raw_record": false,
+        "url_filter": "karaoke" 
+      },
+      "note": "guanguan",
+      "backup": false
+    },
     {
       "room_id": "24688068",
       "recorder": { 
