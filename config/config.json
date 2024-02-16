@@ -15,6 +15,15 @@
   },
   "spec": [
     {
+      "room_id": "282208",
+      "recorder": { 
+        "keep_raw_record": false,
+        "url_filter": null
+      },
+      "note": "Nox",
+      "backup": false
+    },
+    {
       "room_id": "21802860",
       "recorder": { 
         "keep_raw_record": false,
@@ -70,11 +79,20 @@
     },
     {
       "room_id": "24088644",
-      "recorder": { 
+      "recorder": {
         "keep_raw_record": false,
-        "url_filter": "karaoke" 
+        "url_filter": "karaoke"
       },
       "note": "hedvik",
+      "backup": false
+    },
+    {
+      "room_id": "22890279",
+      "recorder": {
+        "keep_raw_record": false,
+        "url_filter": "570"
+      },
+      "note": "570",
       "backup": false
     }
   ]

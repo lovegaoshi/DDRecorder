@@ -325,7 +325,7 @@ def split_in_half(filename, length:str = None, run: bool = True):
         c.wait()
     os.remove(filename)
 
-def url_filter(r: list, or_keywords:list=[]) -> list:
+def url_filter(r: list, or_keywords:list=[], no_keywords: list = []) -> list:
     '''
     keep item in r if item has one of the or keywords
     '''
@@ -333,12 +333,15 @@ def url_filter(r: list, or_keywords:list=[]) -> list:
     for i in r:
         if not (True in [x in i[0] for x in or_keywords]):
             continue
+        if i in no_keywords:
+            continue
         r2.append(i[1])
     return r2
 
 FILTERS = {
     None: lambda r: [x[1] for x in r],
     'karaoke': lambda r: url_filter(r, or_keywords=['歌','唱', "Live", "LIVE", "live"]),
+    '570': lambda r: url_filter(r, or_keywords=['歌','唱', "Live", "LIVE", "live","早台"], no_keywords=['唱完']),
     'moonlight': lambda r: url_filter(r, or_keywords=['歌','唱','黑听','猫猫头播放器']),
 }
 
