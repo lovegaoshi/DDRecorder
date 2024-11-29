@@ -34,7 +34,7 @@ class BiliLiveRecorder(BiliLive):
             logging.info(self.generate_log('√ 正在录制...' + self.room_id))
             default_headers = {
                 'Accept-Encoding': 'identity',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
                 'Referer': 'https://live.bilibili.com/'
             }
             headers = {**default_headers, **
@@ -42,7 +42,7 @@ class BiliLiveRecorder(BiliLive):
             resp = requests.get(record_url, stream=True,
                                 headers=headers,
                                 timeout=self.config.get(
-                                    'root', {}).get('check_interval', 60))
+                                    'root', {}).get('check_interval', 120))
             with open(output_filename, "wb") as f: # 1KB
                 for chunk in resp.iter_content(chunk_size=1024):
                     if chunk:

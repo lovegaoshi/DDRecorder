@@ -20,7 +20,16 @@
         "keep_raw_record": false,
         "url_filter": null
       },
-      "note": "Nox",
+      "note": "nox",
+      "backup": false
+    },
+    {
+      "room_id": "22251442",
+      "recorder": { 
+        "keep_raw_record": false,
+        "url_filter": null
+      },
+      "note": "xiaowandou neng neng",
       "backup": false
     },
     {
@@ -90,7 +99,7 @@
       "room_id": "22890279",
       "recorder": {
         "keep_raw_record": false,
-        "url_filter": "570"
+        "url_filter": null
       },
       "note": "570",
       "backup": false
